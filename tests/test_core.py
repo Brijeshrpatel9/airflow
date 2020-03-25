@@ -69,6 +69,7 @@ from jinja2 import UndefinedError
 from pendulum import utcnow
 import six
 
+from tests.cli.test_cli import redirect_stdout
 from tests.test_utils.config import conf_vars
 
 if six.PY2:
@@ -1391,6 +1392,15 @@ class CliTests(unittest.TestCase):
         cli.test(self.parser.parse_args([
             'test', 'example_passing_params_via_test_command', 'also_run_this',
             '-tp', '{"foo":"bar"}', DEFAULT_DATE.isoformat()]))
+
+    def test_cli_test_with_env_vars(self):
+        with redirect_stdout(six.StringIO()) as stdout:
+            cli.test(self.parser.parse_args([
+                'test', 'example_passing_params_via_test_command', 'env_var_test_task',
+                '--env-vars', '{"foo":"bar"}', DEFAULT_DATE.isoformat()]))
+        output = stdout.getvalue()
+        self.assertIn('foo=bar', output)
+        self.assertIn('AIRFLOW_TEST_MODE=True', output)
 
     def test_cli_run(self):
         cli.run(self.parser.parse_args([

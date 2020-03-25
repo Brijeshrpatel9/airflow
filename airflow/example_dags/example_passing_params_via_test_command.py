@@ -16,7 +16,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-
+import os
 from datetime import timedelta
 
 from airflow import DAG
@@ -66,6 +66,24 @@ also_run_this = BashOperator(
     bash_command=my_templated_command,
     params={"miff": "agg"},
     dag=dag,
+)
+
+
+def print_env_vars(test_mode):
+    """
+    Print out the "foo" param passed in via
+    `airflow test example_passing_params_via_test_command env_var_test_task <date>
+    --env-vars '{"foo":"bar"}'`
+    """
+    if test_mode:
+        print("foo={}".format(os.environ.get('foo')))
+        print("AIRFLOW_TEST_MODE={}".format(os.environ.get('AIRFLOW_TEST_MODE')))
+
+
+env_var_test_task = PythonOperator(
+    task_id='env_var_test_task',
+    python_callable=print_env_vars,
+    dag=dag
 )
 
 run_this >> also_run_this

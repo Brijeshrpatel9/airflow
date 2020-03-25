@@ -661,9 +661,14 @@ def list_tasks(args, dag=None):
 
 @cli_utils.action_logging
 def test(args, dag=None):
-    # We want log outout from operators etc to show up here. Normally
+    # We want log output from operators etc to show up here. Normally
     # airflow.task would redirect to a file, but here we want it to propagate
     # up to the normal airflow handler.
+
+    env_vars = {'AIRFLOW_TEST_MODE': 'True'}
+    if args.env_vars:
+        env_vars.update(args.env_vars)
+        os.environ.update(env_vars)
 
     dag = dag or get_dag(args)
 
@@ -1963,6 +1968,10 @@ class CLIFactory(object):
             action="store_true",
             help="Open debugger on uncaught exception",
         ),
+        'env_vars': Arg(
+            ("--env-vars",),
+            help="Set env var in both parsing time and runtime for each of entry supplied in a JSON dict",
+            type=json.loads),
         # connections
         'list_connections': Arg(
             ('-l', '--list'),
@@ -2167,7 +2176,7 @@ class CLIFactory(object):
                 "dependencies or recording its state in the database."),
             'args': (
                 'dag_id', 'task_id', 'execution_date', 'subdir', 'dry_run',
-                'task_params', 'post_mortem'),
+                'task_params', 'post_mortem', 'env_vars'),
         }, {
             'func': webserver,
             'help': "Start a Airflow webserver instance",
